@@ -92,6 +92,14 @@ func ApplyFilter(query *bun.SelectQuery, filter dto.Filter) *bun.SelectQuery {
 		return query.Where("? IS NULL", bun.Ident(field))
 	case "IS NOT NULL":
 		return query.Where("? IS NOT NULL", bun.Ident(field))
+	case "BETWEEN":
+		// Handle array values for BETWEEN operator
+		// The value should be an array or slice with two elements: [lowerBound, upperBound]
+		if arr, ok := value.([]interface{}); ok && len(arr) == 2 {
+			return query.Where("? BETWEEN ? AND ?", bun.Ident(field), arr[0], arr[1])
+		}
+		// If the value is not a valid array, return an error or default behavior
+		return query.Where("? = ?", bun.Ident(field), value)
 	default:
 		// If operator not recognized, default to equality
 		return query.Where("? = ?", bun.Ident(field), value)

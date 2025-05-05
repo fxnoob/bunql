@@ -15,6 +15,7 @@ var operatorMap = map[string]string{
 	"notin":     "NOT IN",
 	"isnull":    "IS NULL",
 	"isnotnull": "IS NOT NULL",
+	"between":   "BETWEEN",
 }
 
 // GetOperator returns the SQL operator for a given operator name

@@ -1,8 +1,8 @@
 package dto
 
 type Pagination struct {
-	Page  int `json:"page"`
-	Limit int `json:"limit"`
+	Page     int `json:"page"`
+	PageSize int `json:"pageSize"`
 }
 
 // SortField represents a field to sorting by and the direction

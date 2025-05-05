@@ -123,8 +123,8 @@ func TestFiltersAndSorting(t *testing.T) {
 		panic(fmt.Sprintf("Count failed: %v", err))
 	}
 
-	// Get pagination metadata
-	meta := bunql.GetPaginationMetadata(ql.Pagination, count)
+	// Get pagination metadata with base URI for prev/next links
+	meta := bunql.GetPaginationMetadata(ql.Pagination, count, "https://api.example.com/users")
 	metaJSON, _ := json.MarshalIndent(meta, "", "  ")
 	fmt.Println("Pagination metadata:")
 	fmt.Println(string(metaJSON))
