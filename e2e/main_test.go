@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun/extra/bundebug"
 	"math/rand"
+	"os"
 	"testing"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -17,7 +18,11 @@ import (
 )
 
 func GetDB() (*bun.DB, error) {
-	dsn := "sqlserver://sa:YourStrong@Passw0rd@localhost:1433?database=master&encrypt=disable"
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = "sqlserver://sa:YourStrong@Passw0rd@localhost:1433?database=master&encrypt=disable"
+	}
+
 	sqldb, err := sql.Open("sqlserver", dsn)
 	if err != nil {
 		fmt.Println("DATABASE CONNECTION ERROR:", err)
