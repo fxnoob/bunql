@@ -112,9 +112,6 @@ func (q *BunQL) ApplyWithCount(ctx context.Context, query *bun.SelectQuery) (*bu
 		query = pagination.ApplyPagination(query, q.Pagination)
 	}
 
-	// Modify the count query to count all rows
-	countQuery = countQuery.Column("count(*) as total_count")
-
 	// Print the queries to console
 	fmt.Println("Query:", query)
 	fmt.Println("Count Query:", countQuery)
@@ -337,10 +334,8 @@ func GetPaginationMetadata(p *dto.Pagination, totalCount int, baseURI string) ma
 // ExecuteWithCount executes both the main query and the count query, and returns the results along with the total count
 func ExecuteWithCount[T any](ctx context.Context, query, countQuery *bun.SelectQuery) ([]T, int, error) {
 	// Execute the count query
-	var count struct {
-		TotalCount int `bun:"total_count"`
-	}
-	if err := countQuery.Scan(ctx, &count); err != nil {
+	count, err := countQuery.Count(ctx)
+	if err != nil {
 		return nil, 0, fmt.Errorf("failed to execute count query: %w", err)
 	}
 
@@ -350,5 +345,5 @@ func ExecuteWithCount[T any](ctx context.Context, query, countQuery *bun.SelectQ
 		return nil, 0, fmt.Errorf("failed to execute main query: %w", err)
 	}
 
-	return results, count.TotalCount, nil
+	return results, count, nil
 }
