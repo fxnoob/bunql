@@ -331,6 +331,24 @@ func GetPaginationMetadata(p *dto.Pagination, totalCount int, baseURI string) ma
 	return result
 }
 
+// ParseSortParams creates a sort JSON string from sortby and sortDirection parameters
+// sortby is the field name to sort by
+// sortDirection is the sort direction, which can be "asc" or "desc" (defaults to "asc" if invalid)
+func ParseSortParams(sortby, sortDirection string) string {
+	// Default to "asc" if sortDirection is not valid
+	if sortDirection != "asc" && sortDirection != "desc" {
+		sortDirection = "asc"
+	}
+
+	// Return empty string if sortby is empty
+	if sortby == "" {
+		return ""
+	}
+
+	// Create the sort JSON string
+	return fmt.Sprintf(`[{"field": "%s", "dir": "%s"}]`, sortby, sortDirection)
+}
+
 // ExecuteWithCount executes both the main query and the count query, and returns the results along with the total count
 func ExecuteWithCount[T any](ctx context.Context, query, countQuery *bun.SelectQuery) ([]T, int, error) {
 	// Execute the count query
