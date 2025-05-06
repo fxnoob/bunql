@@ -52,7 +52,7 @@ func ApplyFilterGroup(query *bun.SelectQuery, group dto.FilterGroup) *bun.Select
 				nestedLogic = "and"
 			}
 
-			// Apply the nested group as a sub-group
+			// Apply the nested group as a sub-group with the correct logic
 			q = q.WhereGroup(nestedLogic, func(subq *bun.SelectQuery) *bun.SelectQuery {
 				for _, filter := range nestedGroup.Filters {
 					subq = ApplyFilter(subq, filter)
@@ -97,6 +97,9 @@ func ApplyFilter(query *bun.SelectQuery, filter dto.Filter) *bun.SelectQuery {
 	case "IN":
 		// Handle array values for IN operator
 		return query.Where("? IN (?)", bun.Ident(field), bun.In(value))
+	case "NOT IN":
+		// Handle array values for NOT IN operator
+		return query.Where("? NOT IN (?)", bun.Ident(field), bun.In(value))
 	case "IS NULL":
 		return query.Where("? IS NULL", bun.Ident(field))
 	case "IS NOT NULL":
