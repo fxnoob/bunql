@@ -7,6 +7,7 @@ import (
 	"github.com/fxnoob/bunql/dto"
 	"github.com/fxnoob/bunql/operator"
 	"github.com/uptrace/bun"
+	"regexp"
 	"strings"
 )
 
@@ -72,6 +73,14 @@ func ApplyFilter(query *bun.SelectQuery, filter dto.Filter) *bun.SelectQuery {
 	// Handle different operator
 	switch op {
 	case "=", "!=", ">", ">=", "<", "<=":
+		// Handle date string values by using CAST for date columns
+		if strValue, ok := value.(string); ok {
+			// Check if this might be a date string (simple heuristic)
+			if isDateString(strValue) {
+				// Use CONVERT function for MSSQL to handle date comparison
+				return query.Where(fmt.Sprintf("CONVERT(DATE, ?) %s CONVERT(DATE, ?)", op), bun.Ident(field), strValue)
+			}
+		}
 		return query.Where(fmt.Sprintf("? %s ?", op), bun.Ident(field), value)
 	case "LIKE":
 		// Check if the value is a string
@@ -96,6 +105,15 @@ func ApplyFilter(query *bun.SelectQuery, filter dto.Filter) *bun.SelectQuery {
 		// Handle array values for BETWEEN operator
 		// The value should be an array or slice with two elements: [lowerBound, upperBound]
 		if arr, ok := value.([]interface{}); ok && len(arr) == 2 {
+			// Check if both values might be date strings
+			if strVal1, ok1 := arr[0].(string); ok1 {
+				if strVal2, ok2 := arr[1].(string); ok2 {
+					if isDateString(strVal1) && isDateString(strVal2) {
+						return query.Where("CONVERT(DATE, ?) BETWEEN CONVERT(DATE, ?) AND CONVERT(DATE, ?)",
+							bun.Ident(field), strVal1, strVal2)
+					}
+				}
+			}
 			return query.Where("? BETWEEN ? AND ?", bun.Ident(field), arr[0], arr[1])
 		}
 		// If the value is not a valid array, return an error or default behavior
@@ -141,4 +159,24 @@ func validateFilter(filter dto.Filter) error {
 	}
 
 	return nil
+}
+
+// isDateString checks if a string might be a date string
+// This is a simple heuristic and might need to be adjusted based on your date formats
+func isDateString(s string) bool {
+	// Common date formats: YYYY-MM-DD, MM/DD/YYYY, DD-MM-YYYY, etc.
+	datePatterns := []*regexp.Regexp{
+		regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`),                  // YYYY-MM-DD
+		regexp.MustCompile(`^\d{1,2}/\d{1,2}/\d{4}$`),              // MM/DD/YYYY
+		regexp.MustCompile(`^\d{1,2}-\d{1,2}-\d{4}$`),              // DD-MM-YYYY
+		regexp.MustCompile(`^\d{4}/\d{1,2}/\d{1,2}$`),              // YYYY/MM/DD
+		regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}`), // ISO format
+	}
+
+	for _, pattern := range datePatterns {
+		if pattern.MatchString(s) {
+			return true
+		}
+	}
+	return false
 }
