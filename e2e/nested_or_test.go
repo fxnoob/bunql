@@ -16,6 +16,39 @@ func TestNestedOrLogic(t *testing.T) {
 
 	ctx := context.Background()
 
+	// Setup test data
+	_, _ = db.ExecContext(ctx, `DROP TABLE IF EXISTS users`)
+
+	_, err := db.NewCreateTable().
+		Model((*User)(nil)).
+		Exec(ctx)
+	require.NoError(t, err, "Failed to create users table")
+
+	// Seed users with specific data for this test
+	testUsers := []User{
+		{
+			FirstName: "User1",
+			LastName:  "Last1",
+			Age:       25,
+			Email:     "user1@example.com",
+		},
+		{
+			FirstName: "User2",
+			LastName:  "Last2",
+			Age:       60,
+			Email:     "user2@example.com",
+		},
+		{
+			FirstName: "User3",
+			LastName:  "Last3",
+			Age:       20,
+			Email:     "user3@example.com",
+		},
+	}
+
+	_, err = db.NewInsert().Model(&testUsers).Exec(ctx)
+	require.NoError(t, err, "Failed to insert test users")
+
 	// Create a filter with nested OR logic
 	// Using a simpler structure that doesn't use nested groups
 	filterJSON := `{
@@ -48,16 +81,16 @@ func TestNestedOrLogic(t *testing.T) {
 	query = ql.Apply(ctx, query)
 
 	// Execute the query
-	var users []User
-	err = query.Scan(ctx, &users)
+	var resultUsers []User
+	err = query.Scan(ctx, &resultUsers)
 	require.NoError(t, err, "Query failed")
 
 	// Print the results
-	fmt.Printf("Found %d users with age > 21\n", len(users))
+	fmt.Printf("Found %d users with age > 21\n", len(resultUsers))
 
 	// Filter the users manually to find those that match our conditions
 	var matchingUsers []User
-	for _, user := range users {
+	for _, user := range resultUsers {
 		// Check if the user has age > 21 AND (first_name = 'User1' OR age > 55)
 		if user.Age > 21 && (user.FirstName == "User1" || user.Age > 55) {
 			matchingUsers = append(matchingUsers, user)
