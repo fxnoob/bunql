@@ -11,7 +11,7 @@ import (
 )
 
 type UserSession struct {
-	bun.BaseModel `bun:"table:Auth.UserSessions,alias:user_sessions"`
+	bun.BaseModel `bun:"table:user_sessions,alias:user_sessions"`
 
 	ID     int64 `bun:"id,pk,autoincrement"`
 	UserID int64 `bun:"UserID"`
@@ -19,20 +19,12 @@ type UserSession struct {
 
 func TestCountQuery(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 
-	// Create the Auth schema if it doesn't exist
-	_, err = db.ExecContext(ctx, `IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Auth')
-	BEGIN
-		EXEC('CREATE SCHEMA Auth')
-	END`)
-	require.NoError(t, err, "Failed to create schema")
-
 	// Drop the table if it exists
-	_, err = db.ExecContext(ctx, `IF OBJECT_ID('Auth.UserSessions', 'U') IS NOT NULL DROP TABLE Auth.UserSessions`)
+	_, err := db.ExecContext(ctx, `DROP TABLE IF EXISTS user_sessions`)
 	require.NoError(t, err, "Failed to drop table")
 
 	// Create the table

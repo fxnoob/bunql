@@ -13,8 +13,7 @@ import (
 // TestSimpleQuery demonstrates a simple query using bunql
 func TestSimpleQuery(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 
@@ -55,8 +54,7 @@ func TestSimpleQuery(t *testing.T) {
 // TestQueryWithCount demonstrates how to get the total count of records along with paginated results
 func TestQueryWithCount(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 
@@ -100,8 +98,7 @@ func TestQueryWithCount(t *testing.T) {
 // TestBetweenOperator demonstrates the use of the between operator
 func TestBetweenOperator(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 

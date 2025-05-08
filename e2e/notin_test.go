@@ -14,8 +14,7 @@ import (
 // TestNotInOperator demonstrates the use of the notin operator
 func TestNotInOperator(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 
@@ -56,8 +55,7 @@ func TestNotInOperator(t *testing.T) {
 // TestArrayNotInOperator demonstrates handling an array format similar to the issue description
 func TestArrayNotInOperator(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 
@@ -69,7 +67,7 @@ func TestArrayNotInOperator(t *testing.T) {
 	// Note: The filter JSON format is an array of filters, not a filter group
 	// We need to convert it to a filter group
 	var filters []map[string]interface{}
-	err = json.Unmarshal([]byte(filterJSON), &filters)
+	err := json.Unmarshal([]byte(filterJSON), &filters)
 	require.NoError(t, err, "Failed to parse filter JSON")
 
 	// Convert to a filter group

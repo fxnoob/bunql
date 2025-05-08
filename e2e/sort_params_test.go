@@ -27,8 +27,7 @@ func TestParseSortParams(t *testing.T) {
 
 func TestParseSortParamsWithQuery(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 
@@ -49,7 +48,7 @@ func TestParseSortParamsWithQuery(t *testing.T) {
 
 	// Create a base query
 	query := db.NewSelect().Model((*User)(nil))
-	
+
 	// Apply the BunQL filters, sort, and pagination
 	query = ql.Apply(ctx, query)
 

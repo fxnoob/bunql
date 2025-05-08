@@ -9,21 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Go Test with MSSQL
-
-    services:
-      mssql:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        ports:
-          - 1433:1433
-        env:
-          SA_PASSWORD: "YourStrong@Passw0rd"
-          ACCEPT_EULA: "Y"
-        options: >-
-          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd -Q 'SELECT 1'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+    name: Go Test with SQLite
 
     steps:
       - name: Checkout Code
@@ -39,5 +25,5 @@ jobs:
 
       - name: Run Tests
         env:
-          DATABASE_URL: sqlserver://sa:YourStrong@Passw0rd@localhost:1433?database=master&encrypt=disable
+          DATABASE_URL: file::memory:?cache=shared
         run: go test ./... -v

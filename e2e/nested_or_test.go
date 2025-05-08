@@ -12,8 +12,7 @@ import (
 // TestNestedOrLogic tests that nested OR logic works correctly in filters
 func TestNestedOrLogic(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 

@@ -164,6 +164,44 @@ func validateFilter(filter dto.Filter) error {
 	return nil
 }
 
+// ParseFilterParam creates a FilterGroup from a key name, operator, value, and optional logic
+// This utility function allows creating a simple filter with a single condition
+// key: the field name to filter on
+// op: the operator to use (eq, neq, gt, etc.)
+// value: the value to compare against (can be any type)
+// logic: the logic to use for the filter group ("and" or "or", defaults to "and" if empty or invalid)
+func ParseFilterParam(key string, op string, value interface{}, logic string) (dto.FilterGroup, error) {
+	// Validate the key
+	if key == "" {
+		return dto.FilterGroup{}, errors.New("filter key cannot be empty")
+	}
+
+	// Validate the operator
+	if !operator.IsValidOperator(op) {
+		return dto.FilterGroup{}, fmt.Errorf("invalid operator: %s", op)
+	}
+
+	// Default to "and" logic if not specified or invalid
+	logic = strings.ToLower(logic)
+	if logic != "and" && logic != "or" {
+		logic = "and"
+	}
+
+	// Create the filter
+	filter := dto.Filter{
+		Field:    key,
+		Operator: op,
+		Value:    value,
+	}
+
+	// Create and return the filter group
+	return dto.FilterGroup{
+		Logic:   logic,
+		Filters: []dto.Filter{filter},
+		Groups:  []dto.FilterGroup{},
+	}, nil
+}
+
 // isDateString checks if a string might be a date string
 // This is a simple heuristic and might need to be adjusted based on your date formats
 func isDateString(s string) bool {

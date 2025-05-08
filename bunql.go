@@ -2,6 +2,7 @@ package bunql
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/fxnoob/bunql/dto"
 	"github.com/fxnoob/bunql/filter"
@@ -11,6 +12,9 @@ import (
 	"net/url"
 	"strings"
 )
+
+// Filter is a re-export of dto.Filter to make it accessible directly from the bunql package
+type Filter = dto.Filter
 
 type BunQL struct {
 	Filters             dto.FilterGroup
@@ -347,6 +351,65 @@ func ParseSortParams(sortby, sortDirection string) string {
 
 	// Create the sort JSON string
 	return fmt.Sprintf(`[{"field": "%s", "dir": "%s"}]`, sortby, sortDirection)
+}
+
+// ParseFilterParams creates a filter JSON string from field, operator, and value parameters
+// field is the field name to filter on
+// operator is the operator to use (eq, neq, gt, etc.)
+// value is the value to compare against
+// logic is the logic to use for the filter group ("and" or "or", defaults to "and" if empty or invalid)
+func ParseFilterParams(field, operator string, value interface{}, logic string) (string, error) {
+	// Use the filter package's ParseFilterParam function
+	filterGroup, err := filter.ParseFilterParam(field, operator, value, logic)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert the filter group to JSON
+	jsonBytes, err := json.Marshal(filterGroup)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal filter group to JSON: %w", err)
+	}
+
+	return string(jsonBytes), nil
+}
+
+// ParseMultipleFilterParams creates a filter JSON string from a slice of Filter DTOs
+// filters is a slice of Filter DTOs, each containing a field, operator, and value
+// logic is the logic to use for the filter group ("and" or "or", defaults to "and" if empty or invalid)
+func ParseMultipleFilterParams(filters []Filter, logic string) (string, error) {
+	// Default to "and" logic if not specified or invalid
+	logic = strings.ToLower(logic)
+	if logic != "and" && logic != "or" {
+		logic = "and"
+	}
+
+	// Create a filter group
+	filterGroup := dto.FilterGroup{
+		Logic:   logic,
+		Filters: []dto.Filter{},
+		Groups:  []dto.FilterGroup{},
+	}
+
+	// Add each filter to the group
+	for _, f := range filters {
+		// Use the filter package's ParseFilterParam function to create a filter
+		singleFilterGroup, err := filter.ParseFilterParam(f.Field, f.Operator, f.Value, logic)
+		if err != nil {
+			return "", err
+		}
+
+		// Add the filter to the group
+		filterGroup.Filters = append(filterGroup.Filters, singleFilterGroup.Filters...)
+	}
+
+	// Convert the filter group to JSON
+	jsonBytes, err := json.Marshal(filterGroup)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal filter group to JSON: %w", err)
+	}
+
+	return string(jsonBytes), nil
 }
 
 // ExecuteWithCount executes both the main query and the count query, and returns the results along with the total count

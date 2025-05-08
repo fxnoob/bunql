@@ -10,38 +10,51 @@ import (
 	"github.com/uptrace/bun/extra/bundebug"
 	"math/rand"
 	"os"
+	"sync"
 	"testing"
 
 	_ "github.com/denisenkom/go-mssqldb"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/mssqldialect"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/driver/sqliteshim"
 )
 
-func GetDB() (*bun.DB, error) {
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "sqlserver://sa:YourStrong@Passw0rd@localhost:1433?database=master&encrypt=disable"
-	}
+var (
+	db       *bun.DB
+	initOnce sync.Once
+)
 
-	sqldb, err := sql.Open("sqlserver", dsn)
-	if err != nil {
-		fmt.Println("DATABASE CONNECTION ERROR:", err)
-		return nil, err
-	}
+func GetDB() *bun.DB {
+	initOnce.Do(func() {
+		dsn := os.Getenv("DATABASE_URL")
+		if dsn == "" {
+			dsn = "file::memory:?cache=shared"
+		}
 
-	db := bun.NewDB(sqldb, mssqldialect.New())
-	db.AddQueryHook(bundebug.NewQueryHook(
-		bundebug.WithVerbose(false),
-		bundebug.FromEnv("BUNDEBUG"),
-	))
-	return db, nil
+		sqldb, err := sql.Open(sqliteshim.DriverName(), dsn)
+		if err != nil {
+			panic(fmt.Sprintf("DATABASE CONNECTION ERROR: %v", err))
+		}
+
+		db = bun.NewDB(sqldb, sqlitedialect.New())
+		db.AddQueryHook(bundebug.NewQueryHook(
+			bundebug.WithVerbose(false),
+			bundebug.FromEnv("BUNDEBUG"),
+		))
+
+		if err := db.ResetModel(context.Background(), (*User)(nil)); err != nil {
+			panic(fmt.Sprintf("TABLE CREATION ERROR: %v", err))
+		}
+	})
+
+	return db
 }
-
 func TestCreateAndSeedUsers(t *testing.T) {
-	db, _ := GetDB()
+	db = GetDB()
 	ctx := context.Background()
 	// Drop if exists, then create
-	_, _ = db.ExecContext(ctx, `IF OBJECT_ID('users', 'U') IS NOT NULL DROP TABLE users`)
+	_, _ = db.ExecContext(ctx, `DROP TABLE IF EXISTS users`)
 
 	_, err := db.NewCreateTable().
 		Model((*User)(nil)).
@@ -73,7 +86,7 @@ func TestCreateAndSeedUsers(t *testing.T) {
 
 func TestFiltersAndSorting(t *testing.T) {
 	ctx := context.Background()
-	db, _ := GetDB()
+	db := GetDB()
 	// Sample query filter JSON
 	filterJSON := `{
 		"logic": "and",

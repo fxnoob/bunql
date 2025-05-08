@@ -11,8 +11,7 @@ import (
 // TestFieldValidation tests the validation of allowed fields for filtering and sorting
 func TestFieldValidation(t *testing.T) {
 	// Get database connection
-	db, err := GetDB()
-	require.NoError(t, err, "Failed to connect to database")
+	db = GetDB()
 
 	ctx := context.Background()
 
