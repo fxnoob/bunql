@@ -7,13 +7,11 @@ import (
 	"fmt"
 	"github.com/fxnoob/bunql"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun/extra/bundebug"
 	"math/rand"
 	"os"
 	"sync"
 	"testing"
 
-	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -38,10 +36,6 @@ func GetDB() *bun.DB {
 		}
 
 		db = bun.NewDB(sqldb, sqlitedialect.New())
-		db.AddQueryHook(bundebug.NewQueryHook(
-			bundebug.WithVerbose(false),
-			bundebug.FromEnv("BUNDEBUG"),
-		))
 
 		if err := db.ResetModel(context.Background(), (*User)(nil)); err != nil {
 			panic(fmt.Sprintf("TABLE CREATION ERROR: %v", err))

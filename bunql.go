@@ -97,30 +97,20 @@ func (q *BunQL) Apply(ctx context.Context, query *bun.SelectQuery) *bun.SelectQu
 
 // ApplyWithCount applies all filter, sorting, and pagination to the query and returns both the query and a count query
 func (q *BunQL) ApplyWithCount(ctx context.Context, query *bun.SelectQuery) (*bun.SelectQuery, *bun.SelectQuery) {
-	// Create a copy of the query for counting
-	countQuery := query.Clone()
+	// Apply the filters, sorting, and pagination to the main query
+	mainQuery := q.Apply(ctx, query)
 
-	// Apply filter to both queries
+	// For the count query, only apply the filters
+	countQuery := query
 	if len(q.Filters.Filters) > 0 || len(q.Filters.Groups) > 0 {
-		query = filter.ApplyFilterGroup(query, q.Filters)
 		countQuery = filter.ApplyFilterGroup(countQuery, q.Filters)
 	}
 
-	// Apply sorting only to the main query
-	if len(q.Sort) > 0 {
-		query = sorting.ApplySort(query, q.Sort)
-	}
-
-	// Apply pagination only to the main query
-	if q.Pagination != nil {
-		query = pagination.ApplyPagination(query, q.Pagination)
-	}
-
 	// Print the queries to console
-	fmt.Println("Query:", query)
+	fmt.Println("Main Query:", mainQuery)
 	fmt.Println("Count Query:", countQuery)
 
-	return query, countQuery
+	return mainQuery, countQuery
 }
 
 // ParseFromParams creates a BunQL instance from JSON/query parameters
