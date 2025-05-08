@@ -150,57 +150,46 @@ func TestPaginationMetadata(t *testing.T) {
 	metadata := bunql.GetPaginationMetadata(pagination, totalCount, baseURI)
 
 	// Check that the metadata contains the expected values
-	require.Equal(t, 2, metadata["page"])
-	require.Equal(t, 10, metadata["pageSize"])
-	require.Equal(t, 10, metadata["total"])
-	require.Equal(t, 100, metadata["totalItems"])
+	require.Equal(t, 10, metadata.Total)
+	require.Equal(t, 100, metadata.TotalItem)
 
 	// Check that prev and next URLs contain the original query parameters
-	prevURL, ok := metadata["prev"].(string)
-	require.True(t, ok, "prev should be a string")
-	require.Contains(t, prevURL, "filter=active")
-	require.Contains(t, prevURL, "sort=name")
-	require.Contains(t, prevURL, "page=1")
-	require.Contains(t, prevURL, "pageSize=10")
+	require.NotNil(t, metadata.Prev, "prev should not be nil")
+	require.Contains(t, *metadata.Prev, "filter=active")
+	require.Contains(t, *metadata.Prev, "sort=name")
+	require.Contains(t, *metadata.Prev, "page=1")
+	require.Contains(t, *metadata.Prev, "pageSize=10")
 
-	nextURL, ok := metadata["next"].(string)
-	require.True(t, ok, "next should be a string")
-	require.Contains(t, nextURL, "filter=active")
-	require.Contains(t, nextURL, "sort=name")
-	require.Contains(t, nextURL, "page=3")
-	require.Contains(t, nextURL, "pageSize=10")
+	require.NotNil(t, metadata.Next, "next should not be nil")
+	require.Contains(t, *metadata.Next, "filter=active")
+	require.Contains(t, *metadata.Next, "sort=name")
+	require.Contains(t, *metadata.Next, "page=3")
+	require.Contains(t, *metadata.Next, "pageSize=10")
 
 	// Test case 2: First page (prev should be omitted)
 	pagination.Page = 1
 	metadata = bunql.GetPaginationMetadata(pagination, totalCount, baseURI)
 
 	// Check that prev is not included in the metadata
-	_, hasPrev := metadata["prev"]
-	require.False(t, hasPrev, "prev should not be included for the first page")
+	require.Nil(t, metadata.Prev, "prev should be nil for the first page")
 
 	// Check that next is included
-	_, hasNext := metadata["next"]
-	require.True(t, hasNext, "next should be included")
+	require.NotNil(t, metadata.Next, "next should not be nil")
 
 	// Test case 3: Last page (next should be omitted)
 	pagination.Page = 10
 	metadata = bunql.GetPaginationMetadata(pagination, totalCount, baseURI)
 
 	// Check that prev is included
-	_, hasPrev = metadata["prev"]
-	require.True(t, hasPrev, "prev should be included for the last page")
+	require.NotNil(t, metadata.Prev, "prev should not be nil for the last page")
 
 	// Check that next is not included
-	_, hasNext = metadata["next"]
-	require.False(t, hasNext, "next should not be included for the last page")
+	require.Nil(t, metadata.Next, "next should be nil for the last page")
 
 	// Test case 4: No pagination (both prev and next should be omitted)
 	metadata = bunql.GetPaginationMetadata(nil, totalCount, baseURI)
 
 	// Check that neither prev nor next is included
-	_, hasPrev = metadata["prev"]
-	require.False(t, hasPrev, "prev should not be included when pagination is nil")
-
-	_, hasNext = metadata["next"]
-	require.False(t, hasNext, "next should not be included when pagination is nil")
+	require.Nil(t, metadata.Prev, "prev should be nil when pagination is nil")
+	require.Nil(t, metadata.Next, "next should be nil when pagination is nil")
 }

@@ -5,6 +5,14 @@ type Pagination struct {
 	PageSize int `json:"pageSize"`
 }
 
+// GetPaginationMetadataOutput represents the output of pagination metadata
+type GetPaginationMetadataOutput struct {
+	Total     int     `json:"total"`
+	Prev      *string `json:"prev"`
+	Next      *string `json:"next"`
+	TotalItem int     `json:"totalItem"`
+}
+
 // SortField represents a field to sorting by and the direction
 type SortField struct {
 	Field     string `json:"field"`

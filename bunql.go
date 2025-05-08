@@ -16,6 +16,9 @@ import (
 // Filter is a re-export of dto.Filter to make it accessible directly from the bunql package
 type Filter = dto.Filter
 
+// PaginationMetadataOutput is an alias for dto.GetPaginationMetadataOutput
+type PaginationMetadataOutput = dto.GetPaginationMetadataOutput
+
 type BunQL struct {
 	Filters             dto.FilterGroup
 	Sort                []dto.SortField
@@ -209,13 +212,11 @@ func contains(slice []string, item string) bool {
 }
 
 // GetPaginationMetadata calculates pagination metadata and generates prev/next URLs
-func GetPaginationMetadata(p *dto.Pagination, totalCount int, baseURI string) map[string]interface{} {
+func GetPaginationMetadata(p *dto.Pagination, totalCount int, baseURI string) PaginationMetadataOutput {
 	if p == nil || p.PageSize <= 0 {
-		return map[string]interface{}{
-			"page":       1,
-			"pageSize":   0,
-			"total":      1,
-			"totalItems": totalCount,
+		return PaginationMetadataOutput{
+			Total:     1,
+			TotalItem: totalCount,
 		}
 	}
 
@@ -250,7 +251,7 @@ func GetPaginationMetadata(p *dto.Pagination, totalCount int, baseURI string) ma
 	}
 
 	// Generate prev and next URLs
-	var prevURL, nextURL string
+	var prevURL, nextURL *string
 
 	if currentPage > 1 {
 		// Create a copy of the query parameters for the prev URL
@@ -276,7 +277,8 @@ func GetPaginationMetadata(p *dto.Pagination, totalCount int, baseURI string) ma
 			}
 		}
 
-		prevURL = baseURL + queryStr
+		prevURLStr := baseURL + queryStr
+		prevURL = &prevURLStr
 	}
 
 	if currentPage < total {
@@ -303,23 +305,16 @@ func GetPaginationMetadata(p *dto.Pagination, totalCount int, baseURI string) ma
 			}
 		}
 
-		nextURL = baseURL + queryStr
+		nextURLStr := baseURL + queryStr
+		nextURL = &nextURLStr
 	}
 
-	// Create the result map
-	result := map[string]interface{}{
-		"page":       currentPage,
-		"pageSize":   p.PageSize,
-		"total":      total,
-		"totalItems": totalCount,
-	}
-
-	// Only include prev and next if they have values
-	if prevURL != "" {
-		result["prev"] = prevURL
-	}
-	if nextURL != "" {
-		result["next"] = nextURL
+	// Create the result using the type alias
+	result := PaginationMetadataOutput{
+		Total:     total,
+		Prev:      prevURL,
+		Next:      nextURL,
+		TotalItem: totalCount,
 	}
 
 	return result
