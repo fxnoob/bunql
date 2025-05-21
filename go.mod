@@ -1,8 +1,8 @@
 module github.com/fxnoob/bunql
 
-go 1.23.0
+go 1.22.3
 
-toolchain go1.23.6
+toolchain go1.22.3
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.28
